@@ -2,7 +2,7 @@ import * as http from 'http';
 import { AddressInfo } from 'net';
 import App from './App';
 import logger from './lib/logger';
-
+import DB from './db'
 const app: App = new App();
 let server: http.Server;
 
@@ -15,10 +15,18 @@ function serverError(error: NodeJS.ErrnoException): void {
 }
 
 function serverListening(): void {
-	const addressInfo: AddressInfo = <AddressInfo>server.address();
+	const addressInfo: AddressInfo = server.address() as AddressInfo;
 	logger.info(
 		`Listening on ${addressInfo.address}:${process.env.PORT || 8080}`,
 	);
+	(async () => {
+
+		// Connect to the database
+		await DB.connect();
+
+		// Optionally sync models
+		await DB.syncModels();
+	})()
 }
 
 app.init()
