@@ -21,7 +21,7 @@ export default class App {
 		// add all global middleware like cors
 		this.middleware();
 
-		// // register the all routes
+		// register the all routes
 		this.routes();
 
 		// add the middleware to handle error, make sure to add if after registering routes method
@@ -90,3 +90,12 @@ export default class App {
 		);
 	}
 }
+
+// Create and initialize the app instance
+const app = new App();
+// Initialize the app
+void app.init();
+
+// Export the app instance and Express application
+export { app };
+export const expressApp = app.express;

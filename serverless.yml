@@ -1,0 +1,62 @@
+service: sct-boiler-backend
+
+frameworkVersion: '3'  # Match installed version
+
+provider:
+  name: aws
+  runtime: nodejs18.x  # Changed to a more stable Node version
+  stage: ${opt:stage, 'dev'}
+  region: us-east-1
+  memorySize: 512 # Increased for better DB connection performance
+  timeout: 30 # Maximum allowed timeout
+  environment:
+    NODE_ENV: ${self:provider.stage}
+    AWS_LAMBDA_ARN: ${env:AWS_LAMBDA_ARN, ''}
+    NEW_ENV_VARIABLE: ${env:NEW_ENV_VARIABLE, 'default_value'}
+  logRetentionInDays: 14
+  logs:
+    httpApi: true  # Simplified logging format
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - events:PutRule
+            - events:PutTargets
+            - events:DeleteRule
+            - events:RemoveTargets
+          Resource: "*"
+        - Effect: Allow
+          Action:
+            - lambda:InvokeFunction
+          Resource: "${env:AWS_LAMBDA_ARN, '*'}"
+
+package:
+  individually: true
+  excludeDevDependencies: true
+
+functions:
+  api:
+    handler: src/lambda.handler  # Changed to use compiled JavaScript
+    events:
+      - httpApi:  # Using httpApi instead of http
+          path: /{proxy+}
+          method: ANY
+          cors: true  # Simplified CORS configuration
+
+plugins:
+  - serverless-plugin-typescript  # Added this back as we're running from source
+  - serverless-offline
+  - serverless-dotenv-plugin
+
+custom:
+  serverless-offline:
+    httpPort: 4000
+    lambdaPort: 4002
+    noPrependStageInUrl: true
+    noAuth: true
+    useChildProcesses: true
+    printOutput: true
+  
+  dotenv:
+    path: .env
